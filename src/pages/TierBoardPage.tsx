@@ -181,7 +181,7 @@ export function TierBoardPage() {
       <PageHeader eyebrow="Hierarchy" title="Tier board">
         Every {CLAN_NAME} member sits on{' '}
         <strong className="text-white">Tier 1</strong> through{' '}
-        <strong className="text-white">Tier 5</strong> — Tier 1 is the highest.
+        <strong className="text-white">Tier 5</strong> Tier 1 is the highest.
         Move up with scrims, ranked, and tournament results. Tap a tier above to
         jump, or grab your{' '}
         <Link to="/soldiers" className="font-semibold text-blue-400 hover:text-blue-300">
