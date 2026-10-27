@@ -149,7 +149,7 @@ export function AdminSignInPanel({ onSignIn }: AdminSignInPanelProps) {
             </h1>
 
             <p className="mt-5 max-w-lg text-base leading-relaxed text-slate-400 sm:text-lg">
-              Locked tools for the family that runs the board — tournament
+              Locked tools for the family that runs the board tournament
               control, leader codes, and the clan master console.{' '}
               <span className="font-semibold text-slate-300">
                 Google sign-in only.
