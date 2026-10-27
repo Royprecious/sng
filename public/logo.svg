@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sngঔ SniperGang">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="10" fill="#0a1628" stroke="url(#g)" stroke-width="2"/>
+  <circle cx="32" cy="32" r="18" fill="none" stroke="#3b82f6" stroke-width="1.5"/>
+  <circle cx="32" cy="32" r="3" fill="#ef4444"/>
+  <path d="M32 32 L48 24" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="32" y="52" text-anchor="middle" fill="url(#g)" font-size="9" font-weight="800" font-family="Oxanium,system-ui,sans-serif">Sng</text>
+</svg>

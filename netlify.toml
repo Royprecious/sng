@@ -1,0 +1,20 @@
+[build]
+  command = "npm install --prefix server && npm run build --prefix server && npm run build:web"
+  publish = "dist"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  included_files = ["server/dist/**", "server/node_modules/**"]
+
+# API first, then SPA (React Router)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
