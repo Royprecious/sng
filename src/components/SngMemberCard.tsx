@@ -109,7 +109,7 @@ export function SngMemberCard({
 
       {/* Off-screen clone for crisp export (fixed width) */}
       <div
-        className="pointer-events-none fixed top-0 left-0 -z-10 w-[360px] opacity-0"
+        className="export-capture-host"
         aria-hidden
         inert
       >

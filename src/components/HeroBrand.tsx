@@ -73,10 +73,10 @@ export function HeroBrand() {
       </div>
 
       <h1 className="relative mt-2 leading-[0.95]">
-        <span className="block text-4xl font-black tracking-[0.08em] text-white drop-shadow-[0_0_28px_rgba(59,130,246,0.35)] sm:text-6xl lg:text-7xl">
+        <span className="block text-[2rem] font-black tracking-[0.06em] text-white drop-shadow-[0_0_28px_rgba(59,130,246,0.35)] min-[400px]:text-4xl sm:text-6xl lg:text-7xl">
           SNIPER
         </span>
-        <span className="hero-gang-word mt-1 block text-4xl font-black tracking-tight sm:text-6xl lg:text-7xl">
+        <span className="hero-gang-word mt-1 block text-[2rem] font-black tracking-tight min-[400px]:text-4xl sm:text-6xl lg:text-7xl">
           GANG
         </span>
       </h1>

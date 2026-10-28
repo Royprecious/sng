@@ -9,7 +9,7 @@ export function Logo({ compact }: LogoProps) {
   return (
     <Link
       to="/"
-      className="group flex items-center gap-3"
+      className="group flex min-w-0 max-w-full items-center gap-2 sm:gap-3"
       aria-label={`${CLAN_NAME} ${CLAN_TAG}`}
     >
       <div className="relative flex h-11 w-11 shrink-0 items-center justify-center">
@@ -109,7 +109,7 @@ export function Logo({ compact }: LogoProps) {
       </div>
       {!compact && (
         <div className="min-w-0 leading-tight">
-          <span className="block truncate text-base font-bold tracking-tight text-white group-hover:text-blue-100 sm:text-lg">
+          <span className="block truncate text-sm font-bold tracking-tight text-white group-hover:text-blue-100 min-[400px]:text-base sm:text-lg">
             Sniper<span className="text-blue-400">Gang</span>
           </span>
           <span className="hidden text-[10px] font-semibold tracking-[0.12em] min-[400px]:block sm:tracking-[0.15em]">

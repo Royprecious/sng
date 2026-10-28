@@ -1,6 +1,28 @@
 import type { MatchEntry, ScoringConfig } from './tournament'
+import {
+  CACHE_TTL,
+  getCached,
+  invalidateCached,
+  setCached,
+} from './apiCache'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? ''
+
+const CACHE_KEYS = {
+  soldiers: 'soldiers',
+  tournamentList: 'tournament-list',
+  tournament: (id: string) => `tournament-${id}`,
+  liveLegacy: 'tournament-live-legacy',
+  activeLive: 'tournament-active-live',
+} as const
+
+function invalidateTournamentCaches() {
+  invalidateCached('tournament')
+}
+
+function markApiHealthy() {
+  setCached('api-health', true)
+}
 
 let authToken: string | null = null
 
@@ -87,8 +109,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export async function fetchSoldiers(): Promise<ApiSoldier[]> {
-  return request<ApiSoldier[]>('/api/soldiers')
+export async function fetchSoldiers(options?: {
+  force?: boolean
+}): Promise<ApiSoldier[]> {
+  if (!options?.force) {
+    const hit = getCached<ApiSoldier[]>(CACHE_KEYS.soldiers, CACHE_TTL.soldiers)
+    if (hit) return hit
+  }
+  const data = await request<ApiSoldier[]>('/api/soldiers')
+  setCached(CACHE_KEYS.soldiers, data)
+  markApiHealthy()
+  return data
+}
+
+function bumpSoldiersCache() {
+  invalidateCached(CACHE_KEYS.soldiers)
 }
 
 export async function fetchSignedInUsers(): Promise<AuthUserRow[]> {
@@ -103,10 +138,12 @@ export async function createSoldier(body: {
   combatRole?: string
   region?: string
 }): Promise<ApiSoldier> {
-  return request<ApiSoldier>('/api/soldiers', {
+  const row = await request<ApiSoldier>('/api/soldiers', {
     method: 'POST',
     body: JSON.stringify(body),
   })
+  bumpSoldiersCache()
+  return row
 }
 
 export async function updateSoldier(
@@ -120,10 +157,12 @@ export async function updateSoldier(
     region?: string
   },
 ): Promise<ApiSoldier> {
-  return request<ApiSoldier>(`/api/soldiers/${encodeURIComponent(id)}`, {
+  const row = await request<ApiSoldier>(`/api/soldiers/${encodeURIComponent(id)}`, {
     method: 'PUT',
     body: JSON.stringify(body),
   })
+  bumpSoldiersCache()
+  return row
 }
 
 export async function assignLeadershipSlot(body: {
@@ -143,26 +182,54 @@ export async function assignLeadershipSlot(body: {
     region?: string
   }
 }): Promise<ApiSoldier | { ok: true }> {
-  return request<ApiSoldier | { ok: true }>('/api/leadership/slot', {
+  const row = await request<ApiSoldier | { ok: true }>('/api/leadership/slot', {
     method: 'PUT',
     body: JSON.stringify(body),
   })
+  bumpSoldiersCache()
+  return row
 }
 
 export async function deleteSoldier(id: string): Promise<void> {
   await request<void>(`/api/soldiers/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   })
+  bumpSoldiersCache()
 }
 
-export async function fetchTournamentList(): Promise<TournamentSummary[]> {
-  return request('/api/tournaments')
+export async function fetchTournamentList(options?: {
+  force?: boolean
+}): Promise<TournamentSummary[]> {
+  if (!options?.force) {
+    const hit = getCached<TournamentSummary[]>(
+      CACHE_KEYS.tournamentList,
+      CACHE_TTL.tournamentList,
+    )
+    if (hit) return hit
+  }
+  const data = await request<TournamentSummary[]>('/api/tournaments')
+  setCached(CACHE_KEYS.tournamentList, data)
+  markApiHealthy()
+  return data
 }
 
 export async function fetchTournamentById(
   id: string,
+  options?: { force?: boolean },
 ): Promise<TournamentPayload & { updatedAt?: string }> {
-  return request(`/api/tournaments/${encodeURIComponent(id)}`)
+  const key = CACHE_KEYS.tournament(id)
+  if (!options?.force) {
+    const hit = getCached<TournamentPayload & { updatedAt?: string }>(
+      key,
+      CACHE_TTL.tournament,
+    )
+    if (hit) return hit
+  }
+  const data = await request<TournamentPayload & { updatedAt?: string }>(
+    `/api/tournaments/${encodeURIComponent(id)}`,
+  )
+  setCached(key, data)
+  return data
 }
 
 export async function createTournament(body: {
@@ -170,42 +237,68 @@ export async function createTournament(body: {
   eventDate?: string
   prizePool?: string
 }): Promise<TournamentPayload & { updatedAt?: string }> {
-  return request('/api/tournaments', {
-    method: 'POST',
-    body: JSON.stringify(body),
-  })
+  const data = await request<TournamentPayload & { updatedAt?: string }>(
+    '/api/tournaments',
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+    },
+  )
+  invalidateTournamentCaches()
+  return data
 }
 
 export async function setCurrentTournament(
   id: string,
 ): Promise<TournamentSummary> {
-  return request(
+  const row = await request<TournamentSummary>(
     `/api/tournaments/${encodeURIComponent(id)}/set-current`,
     { method: 'POST' },
   )
+  invalidateTournamentCaches()
+  return row
 }
 
 export async function deleteTournament(id: string): Promise<void> {
   await request<void>(`/api/tournaments/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   })
+  invalidateTournamentCaches()
 }
 
 export async function saveTournament(
   id: string,
   payload: TournamentPayload,
 ): Promise<TournamentPayload & { updatedAt?: string }> {
-  return request(`/api/tournaments/${encodeURIComponent(id)}`, {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  })
+  const data = await request<TournamentPayload & { updatedAt?: string }>(
+    `/api/tournaments/${encodeURIComponent(id)}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    },
+  )
+  setCached(CACHE_KEYS.tournament(id), data)
+  invalidateCached(CACHE_KEYS.activeLive)
+  invalidateCached(CACHE_KEYS.tournamentList)
+  return data
 }
 
 /** Loads the clan-live tournament (is current). */
-export async function fetchLiveTournament(): Promise<
-  TournamentPayload & { updatedAt?: string }
-> {
-  return request('/api/tournament')
+export async function fetchLiveTournament(options?: {
+  force?: boolean
+}): Promise<TournamentPayload & { updatedAt?: string }> {
+  if (!options?.force) {
+    const hit = getCached<TournamentPayload & { updatedAt?: string }>(
+      CACHE_KEYS.liveLegacy,
+      CACHE_TTL.tournament,
+    )
+    if (hit) return hit
+  }
+  const data = await request<TournamentPayload & { updatedAt?: string }>(
+    '/api/tournament',
+  )
+  setCached(CACHE_KEYS.liveLegacy, data)
+  return data
 }
 
 /** Live tournament, or newest saved event if none is marked live. */
@@ -227,15 +320,24 @@ export async function fetchLiveTournamentWithFallback(): Promise<
 }
 
 /** Only the tournament marked live (Set as live on Tournament page). */
-export async function fetchActiveLiveTournament(): Promise<
-  TournamentPayload & { updatedAt?: string }
-> {
-  const list = await fetchTournamentList()
+export async function fetchActiveLiveTournament(options?: {
+  force?: boolean
+}): Promise<TournamentPayload & { updatedAt?: string }> {
+  if (!options?.force) {
+    const hit = getCached<TournamentPayload & { updatedAt?: string }>(
+      CACHE_KEYS.activeLive,
+      CACHE_TTL.activeLive,
+    )
+    if (hit) return hit
+  }
+  const list = await fetchTournamentList({ force: options?.force })
   const live = list.filter((t) => t.isCurrent)
   if (live.length === 0) {
     throw new Error('NO_LIVE_TOURNAMENT')
   }
-  return fetchTournamentById(live[0].id)
+  const data = await fetchTournamentById(live[0].id, { force: options?.force })
+  setCached(CACHE_KEYS.activeLive, data)
+  return data
 }
 
 export async function fetchAuthMe(): Promise<AuthMe> {
@@ -271,8 +373,11 @@ export async function listInviteCodes(): Promise<InviteCode[]> {
 }
 
 export async function checkApiHealth(): Promise<boolean> {
+  const cached = getCached<boolean>('api-health', CACHE_TTL.health)
+  if (cached) return true
   try {
     const res = await fetch(`${API_BASE}/api/health`)
+    if (res.ok) markApiHealthy()
     return res.ok
   } catch {
     return false

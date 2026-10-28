@@ -20,8 +20,18 @@ type TeamPodiumBoardProps = {
   className?: string
 }
 
-/** Center column = 1st; left = 2nd; right = 3rd. */
-const PODIUM_COLUMN_ORDER: PodiumRank[] = [2, 1, 3]
+/** Desktop: 2 | 1 | 3. Mobile portrait: stack 1 → 2 → 3. */
+const PODIUM_DESKTOP_COL: Record<PodiumRank, string> = {
+  1: 'lg:col-start-2',
+  2: 'lg:col-start-1',
+  3: 'lg:col-start-3',
+}
+
+const PODIUM_MOBILE_ORDER: Record<PodiumRank, string> = {
+  1: 'order-1',
+  2: 'order-2',
+  3: 'order-3',
+}
 
 function riserClass(rank: PodiumRank, exportLayout: boolean): string {
   if (exportLayout) {
@@ -29,9 +39,9 @@ function riserClass(rank: PodiumRank, exportLayout: boolean): string {
     if (rank === 2) return 'h-8'
     return 'h-5'
   }
-  if (rank === 1) return 'h-0 md:h-16'
-  if (rank === 2) return 'h-0 md:h-9'
-  return 'h-0 md:h-4'
+  if (rank === 1) return 'h-0 lg:h-16'
+  if (rank === 2) return 'h-0 lg:h-9'
+  return 'h-0 lg:h-4'
 }
 
 const riserTone: Record<PodiumRank, string> = {
@@ -50,12 +60,12 @@ export const TeamPodiumBoard = forwardRef<HTMLDivElement, TeamPodiumBoardProps>(
       .eventDateLabel
 
     const slotByRank = new Map(slots.map((s) => [s.rank, s]))
-    const columns = PODIUM_COLUMN_ORDER.map((rank) => slotByRank.get(rank) ?? null)
+    const displayRanks: PodiumRank[] = exportLayout ? [2, 1, 3] : [1, 2, 3]
 
     return (
       <div
         ref={ref}
-        className={`relative overflow-visible rounded-3xl border border-amber-500/15 bg-[#04060e] shadow-[0_0_80px_rgba(251,191,36,0.12),0_0_40px_rgba(59,130,246,0.06)] ${exportLayout ? 'w-[1080px] px-10 py-10' : 'px-4 py-8 sm:px-8 sm:py-10'} ${className}`}
+        className={`relative max-w-full overflow-x-hidden rounded-3xl border border-amber-500/15 bg-[#04060e] shadow-[0_0_80px_rgba(251,191,36,0.12),0_0_40px_rgba(59,130,246,0.06)] ${exportLayout ? 'w-[1080px] px-10 py-10' : 'px-3 py-6 min-[480px]:px-6 min-[480px]:py-8 sm:px-8 sm:py-10'} ${className}`}
       >
         <div
           className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl"
@@ -89,23 +99,24 @@ export const TeamPodiumBoard = forwardRef<HTMLDivElement, TeamPodiumBoardProps>(
         </header>
 
         <div
-          className={`relative mt-10 grid items-end gap-8 ${exportLayout ? 'grid-cols-3 gap-5' : 'grid-cols-1 md:mt-12 md:grid-cols-3 md:gap-5 lg:gap-6'}`}
+          className={`relative mt-8 grid items-end gap-6 min-[480px]:mt-10 min-[480px]:gap-8 ${exportLayout ? 'grid-cols-3 gap-5' : 'grid-cols-1 lg:mt-12 lg:grid-cols-3 lg:gap-5 xl:gap-6'}`}
         >
-          {columns.map((slot, colIndex) => {
+          {displayRanks.map((rank) => {
+            const slot = slotByRank.get(rank)
             if (!slot) {
               return (
                 <div
-                  key={`empty-${colIndex}`}
-                  className="hidden min-h-[1px] md:block"
+                  key={`empty-${rank}`}
+                  className="hidden min-h-[1px] lg:block"
                   aria-hidden
                 />
               )
             }
 
-            const { rank, data } = slot
+            const { data } = slot
             const column = (
               <div
-                className={`flex flex-col ${rank === 1 && !exportLayout ? 'md:-mt-4' : ''} ${rank === 1 ? 'podium-slot-champion' : 'podium-slot-dim'}`}
+                className={`flex min-w-0 flex-col ${exportLayout ? '' : `${PODIUM_MOBILE_ORDER[rank]} ${PODIUM_DESKTOP_COL[rank]}`} ${rank === 1 && !exportLayout ? 'lg:-mt-4' : ''} ${rank === 1 ? 'podium-slot-champion' : 'podium-slot-dim'}`}
               >
                 <TeamPodiumCardFace
                   rank={rank}

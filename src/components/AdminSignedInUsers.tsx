@@ -22,7 +22,10 @@ export function AdminSignedInUsers() {
 
   useEffect(() => {
     void load()
-    const t = window.setInterval(() => void load(), REFRESH_MS)
+    const tick = () => {
+      if (document.visibilityState === 'visible') void load()
+    }
+    const t = window.setInterval(tick, REFRESH_MS)
     return () => window.clearInterval(t)
   }, [load])
 

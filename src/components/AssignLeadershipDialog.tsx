@@ -87,7 +87,7 @@ export function AssignLeadershipDialog({
           },
         })
       }
-      await refreshSoldiers()
+      await refreshSoldiers({ force: true })
       onClose()
     } catch (error) {
       setErr(

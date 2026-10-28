@@ -32,7 +32,7 @@ export function HomePage() {
 
   return (
     <>
-      <section className="relative page-shell mx-auto max-w-7xl pb-12 pt-8 sm:pb-16 sm:pt-12 lg:pt-20">
+      <section className="relative page-shell mx-auto min-w-0 max-w-7xl overflow-x-hidden pb-12 pt-8 sm:pb-16 sm:pt-12 lg:pt-20">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[min(720px,85vh)] overflow-hidden">
           <div className="absolute inset-0 bg-grid-pattern-home opacity-50" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_40%,transparent_20%,#060b14_88%)]" />

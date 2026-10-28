@@ -32,59 +32,63 @@ export async function attachAuth(
     return
   }
 
-  const token = header.slice(7)
-  const { data, error } = await supabase.auth.getUser(token)
-  if (error || !data.user?.email) {
-    next()
-    return
-  }
+  try {
+    const token = header.slice(7)
+    const { data, error } = await supabase.auth.getUser(token)
+    if (error || !data.user?.email) {
+      next()
+      return
+    }
 
-  const email = data.user.email.toLowerCase()
-  const userId = data.user.id
-  req.authUser = { id: userId, email }
+    const email = data.user.email.toLowerCase()
+    const userId = data.user.id
+    req.authUser = { id: userId, email }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', userId)
-    .maybeSingle()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .maybeSingle()
 
-  let role = (profile?.role as UserRole | undefined) ?? 'viewer'
+    let role = (profile?.role as UserRole | undefined) ?? 'viewer'
 
-  if (email === SUPER_ADMIN_EMAIL) {
-    role = 'super_admin'
-    await supabase.from('profiles').upsert(
-      {
-        id: userId,
-        email,
-        role: 'super_admin',
+    if (email === SUPER_ADMIN_EMAIL) {
+      role = 'super_admin'
+      await supabase.from('profiles').upsert(
+        {
+          id: userId,
+          email,
+          role: 'super_admin',
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' },
+      )
+    } else if (!profile) {
+      await supabase.from('profiles').upsert(
+        {
+          id: userId,
+          email,
+          role: 'viewer',
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' },
+      )
+    } else {
+      role = profile.role as UserRole
+    }
+
+    req.role = role
+
+    void supabase
+      .from('profiles')
+      .update({
+        last_seen_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'id' },
-    )
-  } else if (!profile) {
-    await supabase.from('profiles').upsert(
-      {
-        id: userId,
-        email,
-        role: 'viewer',
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'id' },
-    )
-  } else {
-    role = profile.role as UserRole
+      })
+      .eq('id', userId)
+  } catch (err) {
+    console.error('attachAuth failed (check Supabase server env):', err)
   }
-
-  req.role = role
-
-  void supabase
-    .from('profiles')
-    .update({
-      last_seen_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', userId)
 
   next()
 }

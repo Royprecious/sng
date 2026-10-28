@@ -67,7 +67,7 @@ export function AddSoldierForm({
       const tag = previewGamertag(name)
       setName('')
       setMsg(`Recruited ${tag} — saved to Supabase.`)
-      await refreshSoldiers()
+      await refreshSoldiers({ force: true })
       onAdded?.()
     } catch (error) {
       setErr(error instanceof Error ? error.message : 'Could not add soldier')

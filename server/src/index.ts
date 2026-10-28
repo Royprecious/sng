@@ -8,7 +8,7 @@ import {
 } from './auth.js'
 import { applyClanTagToName, avatarFromGamertag } from './gamertag.js'
 import { generateInviteCode } from './codes.js'
-import { supabase } from './supabase.js'
+import { supabase, supabaseEnvStatus } from './supabase.js'
 import type { SoldierRow, TournamentStateRow } from './types.js'
 
 const app = express()
@@ -63,6 +63,14 @@ app.use((req, _res, next) => {
   next()
 })
 
+app.get('/api/health', (_req, res) => {
+  res.json({
+    ok: true,
+    service: 'sng-api',
+    supabaseEnv: supabaseEnvStatus(),
+  })
+})
+
 app.use(attachAuth)
 
 const ONLINE_MS = 5 * 60 * 1000
@@ -103,10 +111,6 @@ function mapSoldier(row: SoldierRow) {
     sortOrder: row.sort_order,
   }
 }
-
-app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'sng-api' })
-})
 
 app.get('/api/auth/me', (req, res) => {
   if (!req.authUser) {

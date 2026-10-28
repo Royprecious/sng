@@ -78,7 +78,7 @@ export function EditSoldierDialog({ soldier, onClose }: EditSoldierDialogProps) 
         combatRole,
         region,
       })
-      await refreshSoldiers()
+      await refreshSoldiers({ force: true })
       onClose()
     } catch (error) {
       setErr(error instanceof Error ? error.message : 'Update failed')
@@ -99,7 +99,7 @@ export function EditSoldierDialog({ soldier, onClose }: EditSoldierDialogProps) 
     setErr(null)
     try {
       await deleteSoldier(soldier.id)
-      await refreshSoldiers()
+      await refreshSoldiers({ force: true })
       onClose()
     } catch (error) {
       setErr(error instanceof Error ? error.message : 'Delete failed')

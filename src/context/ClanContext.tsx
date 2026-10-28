@@ -4,22 +4,26 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
+import { CACHE_TTL, getCached } from '../lib/apiCache'
 import { fetchSoldiers, checkApiHealth } from '../lib/api'
 import { type Soldier, type ClanRank, type TierId } from '../data/clan'
 
 type ClanContextValue = {
   soldiers: Soldier[]
   loading: boolean
+  /** First API bootstrap finished (avoids false "offline" on other pages). */
+  ready: boolean
   apiConnected: boolean
-  refreshSoldiers: () => Promise<void>
+  refreshSoldiers: (options?: { force?: boolean }) => Promise<void>
 }
 
 const ClanContext = createContext<ClanContextValue | null>(null)
 
-function mapApiSoldier(raw: {
+type ApiSoldierRow = {
   id: string
   gamertag: string
   role: string
@@ -31,7 +35,9 @@ function mapApiSoldier(raw: {
   region: string
   avatar: string
   sortOrder?: number
-}): Soldier {
+}
+
+function mapApiSoldier(raw: ApiSoldierRow): Soldier {
   const combat = (raw.combatRole ?? 'support').toLowerCase() as Soldier['combatRole']
   return {
     id: raw.id,
@@ -48,37 +54,52 @@ function mapApiSoldier(raw: {
   }
 }
 
-export function ClanProvider({ children }: { children: ReactNode }) {
-  const [soldiers, setSoldiers] = useState<Soldier[]>([])
-  const [loading, setLoading] = useState(true)
-  const [apiConnected, setApiConnected] = useState(false)
+function readSoldiersCache(): Soldier[] {
+  const cached = getCached<ApiSoldierRow[]>('soldiers', CACHE_TTL.soldiers)
+  return cached ? cached.map(mapApiSoldier) : []
+}
 
-  const refreshSoldiers = useCallback(async () => {
-    setLoading(true)
+export function ClanProvider({ children }: { children: ReactNode }) {
+  const initialCached = readSoldiersCache()
+  const [soldiers, setSoldiers] = useState<Soldier[]>(initialCached)
+  const [loading, setLoading] = useState(initialCached.length === 0)
+  const [ready, setReady] = useState(false)
+  const [apiConnected, setApiConnected] = useState(initialCached.length > 0)
+  const mounted = useRef(false)
+  const soldiersRef = useRef(soldiers)
+  soldiersRef.current = soldiers
+
+  const refreshSoldiers = useCallback(async (options?: { force?: boolean }) => {
+    const force = options?.force ?? false
+    if (soldiersRef.current.length === 0 && !force) setLoading(true)
+
     try {
       const ok = await checkApiHealth()
       setApiConnected(ok)
       if (!ok) {
-        setSoldiers([])
+        setSoldiers((current) => (current.length === 0 ? [] : current))
         return
       }
-      const data = await fetchSoldiers()
+      const data = await fetchSoldiers({ force })
       setSoldiers(data.map(mapApiSoldier))
     } catch {
       setApiConnected(false)
-      setSoldiers([])
+      setSoldiers((current) => (current.length === 0 ? [] : current))
     } finally {
       setLoading(false)
+      setReady(true)
     }
   }, [])
 
   useEffect(() => {
-    void refreshSoldiers()
+    if (mounted.current) return
+    mounted.current = true
+    void refreshSoldiers({ force: false })
   }, [refreshSoldiers])
 
   const value = useMemo(
-    () => ({ soldiers, loading, apiConnected, refreshSoldiers }),
-    [soldiers, loading, apiConnected, refreshSoldiers],
+    () => ({ soldiers, loading, ready, apiConnected, refreshSoldiers }),
+    [soldiers, loading, ready, apiConnected, refreshSoldiers],
   )
 
   return <ClanContext.Provider value={value}>{children}</ClanContext.Provider>

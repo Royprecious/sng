@@ -14,12 +14,21 @@
 @layer base {
   html {
     overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
     @apply min-h-dvh bg-[#060b14] text-slate-100 antialiased;
     font-family: var(--font-sans);
     overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  #root {
+    min-height: 100dvh;
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   h1,
@@ -38,10 +47,31 @@
   .site-header {
     padding-left: max(0px, env(safe-area-inset-left));
     padding-right: max(0px, env(safe-area-inset-right));
+    padding-top: max(0.375rem, env(safe-area-inset-top));
   }
 
   .site-footer {
     padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+
+  .main-content {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  /** Off-screen PNG export — must not widen the page on phones/tablets */
+  .export-capture-host {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    z-index: -10;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .bg-grid-pattern {
@@ -824,7 +854,7 @@
     opacity: 0.85;
   }
 
-  @media (max-width: 767px) {
+  @media (max-width: 1023px) {
     .podium-slot-dim {
       opacity: 1;
       filter: none;

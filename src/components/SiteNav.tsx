@@ -23,7 +23,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 
 const desktopLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
-    'rounded-md px-2.5 py-2 text-xs font-semibold tracking-wide uppercase transition xl:px-3 xl:text-sm',
+    'rounded-md px-2 py-2 text-[10px] font-semibold tracking-wide uppercase transition lg:px-2.5 lg:text-xs xl:px-3 xl:text-sm',
     isActive
       ? 'bg-blue-600/25 text-blue-300 ring-1 ring-blue-500/40'
       : 'text-slate-400 hover:bg-slate-800/80 hover:text-blue-200',
@@ -39,7 +39,7 @@ function MobileNavDrawer({
   if (!open) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] md:hidden" role="presentation">
+    <div className="fixed inset-0 z-[200] lg:hidden" role="presentation">
       <button
         type="button"
         className="absolute inset-0 touch-manipulation bg-black/70 backdrop-blur-sm"
@@ -108,8 +108,8 @@ export function SiteNav() {
 
   return (
     <>
-      <nav className="hidden items-center gap-1 md:flex lg:gap-2">
-        <CameroonBadge className="mr-1 hidden lg:inline-flex" />
+      <nav className="hidden max-w-[min(100%,42rem)] flex-wrap items-center justify-end gap-0.5 lg:flex xl:gap-1.5">
+        <CameroonBadge className="mr-1 hidden xl:inline-flex" />
         {links.map((link) => (
           <NavLink
             key={link.to}
@@ -124,7 +124,7 @@ export function SiteNav() {
 
       <button
         type="button"
-        className="inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-lg border border-slate-700 bg-slate-900/80 text-slate-200 transition hover:border-blue-600 hover:text-white active:scale-95 md:hidden"
+        className="inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-lg border border-slate-700 bg-slate-900/80 text-slate-200 transition hover:border-blue-600 hover:text-white active:scale-95 lg:hidden"
         aria-expanded={open}
         aria-controls="mobile-nav-panel"
         aria-label={open ? 'Close menu' : 'Open menu'}

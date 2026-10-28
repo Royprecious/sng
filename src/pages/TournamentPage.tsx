@@ -503,14 +503,14 @@ export function TournamentPage() {
         {!readOnly && apiConnected && (
           <div className="mt-4 flex flex-wrap items-end gap-3">
             {tournamentList.length > 0 ? (
-              <label className="flex flex-col gap-1">
+              <label className="flex min-w-0 flex-1 flex-col gap-1 sm:max-w-xs">
                 <span className="text-xs font-semibold text-slate-500">
                   Open saved
                 </span>
                 <select
                   value={tournamentId}
                   onChange={(e) => void switchTournament(e.target.value)}
-                  className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-200 outline-none focus:border-blue-500"
+                  className="w-full max-w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm font-semibold text-slate-200 outline-none focus:border-blue-500"
                 >
                   {tournamentList.map((t) => (
                     <option key={t.id} value={t.id}>

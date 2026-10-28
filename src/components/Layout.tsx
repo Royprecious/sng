@@ -26,17 +26,19 @@ export function Layout() {
         className={`pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(37,99,235,0.35),transparent)] ${isHome ? 'opacity-55' : ''}`}
       />
 
-      <header className="site-header sticky top-0 z-50 border-b border-blue-950/80 bg-slate-950/95 pt-1.5 max-md:backdrop-blur-none md:bg-slate-950/85 md:backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6 sm:py-3">
-          <Logo />
-          <div className="flex items-center gap-2">
+      <header className="site-header sticky top-0 z-50 border-b border-blue-950/80 bg-slate-950/95 max-lg:backdrop-blur-none lg:bg-slate-950/85 lg:backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2.5 sm:gap-3 sm:px-6 sm:py-3">
+          <div className="min-w-0 flex-1">
+            <Logo />
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <AuthButton />
             <SiteNav />
           </div>
         </div>
       </header>
 
-      <main className="relative z-10">
+      <main className="main-content relative z-10 min-w-0">
         <Outlet />
       </main>
 

@@ -16,7 +16,7 @@ export function PageHeader({ eyebrow, title, children }: PageHeaderProps) {
         </p>
         <CameroonBadge className="scale-90" />
       </div>
-      <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+      <h1 className="mt-2 text-[1.75rem] font-black leading-tight tracking-tight text-white min-[480px]:text-3xl sm:text-4xl lg:text-5xl">
         {title}
       </h1>
       <CameroonStripe size="md" className="mt-4 max-w-[10rem] rounded-full sm:max-w-[12rem]" />

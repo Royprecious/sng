@@ -31,7 +31,7 @@ function formatEventDate(iso: string | null | undefined): string | undefined {
 }
 
 export function TournamentWinnersPage() {
-  const { apiConnected, loading: clanLoading } = useClan()
+  const { apiConnected, ready: clanReady } = useClan()
   const exportRef = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [exportBusy, setExportBusy] = useState(false)
@@ -46,7 +46,7 @@ export function TournamentWinnersPage() {
   const [matches, setMatches] = useState<MatchEntry[]>([])
 
   useEffect(() => {
-    if (clanLoading) return
+    if (!clanReady) return
     let cancelled = false
     setLoading(true)
     ;(async () => {
@@ -94,7 +94,7 @@ export function TournamentWinnersPage() {
     return () => {
       cancelled = true
     }
-  }, [apiConnected, clanLoading])
+  }, [apiConnected, clanReady])
 
   const topThree = useMemo(() => {
     return aggregateTeams(matches, config).slice(0, 3)
@@ -169,17 +169,17 @@ export function TournamentWinnersPage() {
         + placement bonuses across all matches in that event.
       </p>
 
-      {loading && (
+      {(!clanReady || loading) && (
         <p className="text-sm text-slate-500">Loading standings…</p>
       )}
 
-      {!loading && error && (
+      {clanReady && !loading && error && (
         <p className="rounded-xl border border-amber-900/50 bg-amber-950/20 px-4 py-3 text-sm text-amber-200/90">
           {error}
         </p>
       )}
 
-      {!loading && !error && topThree.length === 0 && (
+      {clanReady && !loading && !error && topThree.length === 0 && (
         <p className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-slate-400">
           No team scores yet. Enter matches on the{' '}
           <Link to="/tournament" className="font-semibold text-blue-400">
@@ -189,7 +189,7 @@ export function TournamentWinnersPage() {
         </p>
       )}
 
-      {!loading && !error && podiumSlots.length > 0 && (
+      {clanReady && !loading && !error && podiumSlots.length > 0 && (
         <>
           <TeamPodiumBoard slots={podiumSlots} />
 
@@ -225,7 +225,7 @@ export function TournamentWinnersPage() {
           </div>
 
           <div
-            className="pointer-events-none fixed top-0 left-0 -z-10 opacity-0"
+            className="export-capture-host"
             aria-hidden
             inert
           >
@@ -238,7 +238,7 @@ export function TournamentWinnersPage() {
         </>
       )}
 
-      {!loading && !error && topThree.length > 0 && topThree.length < 3 && (
+      {clanReady && !loading && !error && topThree.length > 0 && topThree.length < 3 && (
         <p className="mt-6 text-center text-xs text-slate-600">
           Only {topThree.length} team
           {topThree.length === 1 ? '' : 's'} scored so far — the image includes
