@@ -82,7 +82,7 @@ export function SoldiersPage() {
               Tap a soldier card to update their profile.
             </p>
           )}
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-8 lg:grid-cols-2 lg:gap-10 xl:grid-cols-3">
             {soldiers.map((s) => (
               <SngMemberCard
                 key={s.id}

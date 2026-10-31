@@ -28,6 +28,14 @@ const sizeClass = {
     tier: 'text-[10px] px-2 py-0.5',
     scope: 'inset-2 sm:inset-3',
   },
+  /** Member card on screen (compact phone, full size from sm). */
+  card: {
+    box: 'h-[4.25rem] w-[4.25rem] sm:h-28 sm:w-28',
+    text: 'text-lg sm:text-3xl',
+    ring: 'rounded-xl sm:rounded-2xl',
+    tier: 'text-[8px] px-1.5 py-0.5 sm:text-[10px] sm:px-2',
+    scope: 'inset-1.5 sm:inset-3',
+  },
   xl: {
     box: 'h-32 w-32',
     text: 'text-4xl',

@@ -13,6 +13,11 @@ import {
   type TournamentSummary,
 } from '../lib/api'
 import { CreateTournamentDialog } from '../components/CreateTournamentDialog'
+import {
+  TeamRosterShareCard,
+  type TeamRosterShareCardData,
+} from '../components/TeamRosterShareCard'
+import { downloadCardPng, shareCardPng } from '../lib/exportMemberCardPng'
 import type { Soldier } from '../data/clan'
 import { PageHeader } from '../components/PageHeader'
 import { PageShell } from '../components/PageShell'
@@ -100,6 +105,7 @@ export function TournamentPage() {
   const { canEdit, isSuperAdmin } = useAuth()
   const { soldiers, apiConnected } = useClan()
   const readOnly = !canEdit
+  const canManageMatches = isSuperAdmin && !readOnly
   const [config, setConfig] = useState<ScoringConfig>({
     killPoint: 1,
     placementPoints: [...DEFAULT_PLACEMENT_POINTS],
@@ -118,6 +124,10 @@ export function TournamentPage() {
     'idle' | 'saving' | 'saved' | 'error'
   >('idle')
   const skipSave = useRef(true)
+  const rosterExportRef = useRef<HTMLDivElement>(null)
+  const [rosterExportPayload, setRosterExportPayload] =
+    useState<TeamRosterShareCardData | null>(null)
+  const [rosterExportBusy, setRosterExportBusy] = useState(false)
 
   useEffect(() => {
     if (matches[0] && !activeMatchId) {
@@ -300,6 +310,83 @@ export function TournamentPage() {
     [matches, config],
   )
 
+  const currentEventName = useMemo(
+    () => tournamentList.find((t) => t.id === tournamentId)?.name,
+    [tournamentList, tournamentId],
+  )
+
+  function teamRosterPayload(team: TeamEntry): TeamRosterShareCardData {
+    return {
+      teamName: team.name,
+      matchLabel: activeMatch?.label ?? 'Match',
+      tournamentName: currentEventName,
+      players: team.players.map((p) => p.name.trim()).filter(Boolean),
+    }
+  }
+
+  async function waitForRosterExportPaint() {
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    })
+  }
+
+  async function exportTeamRoster(team: TeamEntry, mode: 'share' | 'download') {
+    const payload = teamRosterPayload(team)
+    if (!payload.teamName.trim() && payload.players.length === 0) return
+
+    setRosterExportPayload(payload)
+    await waitForRosterExportPaint()
+    const node = rosterExportRef.current
+    if (!node) {
+      setRosterExportPayload(null)
+      return
+    }
+
+    const fileBase = `team-${payload.teamName || 'squad'}-${payload.matchLabel}`
+    const title = `${payload.teamName.trim() || 'Team'} · ${payload.matchLabel} · SNG`
+    if (mode === 'share') {
+      await shareCardPng(node, fileBase, title)
+    } else {
+      await downloadCardPng(node, fileBase)
+    }
+    setRosterExportPayload(null)
+  }
+
+  async function runTeamRosterExport(team: TeamEntry, mode: 'share' | 'download') {
+    if (rosterExportBusy) return
+    setRosterExportBusy(true)
+    try {
+      await exportTeamRoster(team, mode)
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      window.alert(
+        err instanceof Error ? err.message : 'Could not export team roster',
+      )
+    } finally {
+      setRosterExportBusy(false)
+    }
+  }
+
+  async function saveAllTeamRostersForMatch() {
+    if (!activeMatch || rosterExportBusy) return
+    setRosterExportBusy(true)
+    try {
+      for (const team of activeMatch.teams) {
+        const payload = teamRosterPayload(team)
+        if (!payload.teamName.trim() && payload.players.length === 0) continue
+        await exportTeamRoster(team, 'download')
+        await new Promise((r) => setTimeout(r, 350))
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      window.alert(
+        err instanceof Error ? err.message : 'Could not export team rosters',
+      )
+    } finally {
+      setRosterExportBusy(false)
+    }
+  }
+
   function updatePlacementPoint(index: number, value: number) {
     setConfig((c) => {
       const next = [...c.placementPoints]
@@ -309,6 +396,7 @@ export function TournamentPage() {
   }
 
   function addMatch() {
+    if (!isSuperAdmin) return
     const n = matches.length + 1
     const previous = matches[matches.length - 1]
     const m: MatchEntry = {
@@ -329,6 +417,7 @@ export function TournamentPage() {
   }
 
   function removeMatch(matchId: string) {
+    if (!isSuperAdmin) return
     setMatches((prev) => {
       const next = prev.filter((m) => m.id !== matchId)
       if (activeMatchId === matchId && next[0]) setActiveMatchId(next[0].id)
@@ -675,17 +764,20 @@ export function TournamentPage() {
                 {m.label}
               </button>
             ))}
-            <button
-              type="button"
-              onClick={addMatch}
-              className="rounded-lg border border-dashed border-blue-700 px-3 py-1.5 text-sm font-bold text-blue-400 hover:bg-blue-950/50"
-            >
-              + Match
-            </button>
+            {canManageMatches && (
+              <button
+                type="button"
+                onClick={addMatch}
+                className="rounded-lg border border-dashed border-blue-700 px-3 py-1.5 text-sm font-bold text-blue-400 hover:bg-blue-950/50"
+              >
+                + Match
+              </button>
+            )}
           </div>
           <p className="mb-4 text-xs text-slate-500">
-            Adding a match copies every team and soldier from the previous match
-            (kills reset). Swap players per team with the roster dropdown.
+            {canManageMatches
+              ? 'Adding a match copies every team and soldier from the previous match (kills reset). Swap players per team with the roster dropdown.'
+              : 'Only the clan super admin can add or remove matches. You can still edit scores, teams, and rosters within each match.'}
           </p>
 
           {activeMatch && (
@@ -698,19 +790,38 @@ export function TournamentPage() {
                   }
                   className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-base font-bold text-white focus:border-blue-500 sm:w-auto sm:text-lg"
                 />
-                <button
-                  type="button"
-                  onClick={() => removeMatch(activeMatch.id)}
-                  className="text-sm text-red-400 hover:text-red-300 sm:order-none"
-                >
-                  Remove match
-                </button>
+                {canManageMatches && (
+                  <button
+                    type="button"
+                    onClick={() => removeMatch(activeMatch.id)}
+                    className="text-sm text-red-400 hover:text-red-300 sm:order-none"
+                  >
+                    Remove match
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => addTeam(activeMatch.id)}
                   className="rounded-lg bg-blue-600/20 px-4 py-2 text-sm font-bold text-blue-300 hover:bg-blue-600/30 sm:ml-auto"
                 >
                   + Team
+                </button>
+              </div>
+
+              <div className="mb-6 flex flex-col gap-3 rounded-xl border border-blue-900/40 bg-blue-950/20 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <p className="text-sm text-slate-400">
+                  Share a PNG roster so each squad knows their{' '}
+                  <span className="text-slate-200">team name</span> and{' '}
+                  <span className="text-slate-200">teammates</span> for this
+                  match.
+                </p>
+                <button
+                  type="button"
+                  disabled={rosterExportBusy || activeMatch.teams.length === 0}
+                  onClick={() => void saveAllTeamRostersForMatch()}
+                  className="shrink-0 rounded-lg border border-blue-600/50 bg-blue-600/15 px-4 py-2 text-sm font-bold text-blue-200 transition hover:bg-blue-600/25 disabled:opacity-50"
+                >
+                  {rosterExportBusy ? 'Exporting…' : 'Save all team PNGs'}
                 </button>
               </div>
 
@@ -797,6 +908,29 @@ export function TournamentPage() {
                           className="text-xs text-slate-500 hover:text-red-400"
                         >
                           Remove
+                        </button>
+                      </div>
+
+                      <div className="mb-4 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={rosterExportBusy}
+                          onClick={() =>
+                            void runTeamRosterExport(team, 'share')
+                          }
+                          className="touch-manipulation rounded-lg bg-emerald-600/20 px-3 py-1.5 text-xs font-bold text-emerald-300 ring-1 ring-emerald-600/40 hover:bg-emerald-600/30 disabled:opacity-50"
+                        >
+                          Share roster
+                        </button>
+                        <button
+                          type="button"
+                          disabled={rosterExportBusy}
+                          onClick={() =>
+                            void runTeamRosterExport(team, 'download')
+                          }
+                          className="touch-manipulation rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-bold text-slate-200 hover:border-slate-500 hover:bg-slate-800/80 disabled:opacity-50"
+                        >
+                          Save roster PNG
                         </button>
                       </div>
 
@@ -988,6 +1122,16 @@ export function TournamentPage() {
 
       <TeamSeriesResults matches={matches} rows={teamSeries} />
       </fieldset>
+
+      {rosterExportPayload ? (
+        <div className="export-capture-host" aria-hidden inert>
+          <TeamRosterShareCard
+            ref={rosterExportRef}
+            data={rosterExportPayload}
+            exportLayout
+          />
+        </div>
+      ) : null}
     </PageShell>
   )
 }

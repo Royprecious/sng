@@ -811,6 +811,29 @@ function mapTournamentRowWithFallback(
   }
 }
 
+function tournamentMatchIds(matches: unknown): string[] {
+  if (!Array.isArray(matches)) return []
+  const ids: string[] = []
+  for (const m of matches) {
+    if (
+      m &&
+      typeof m === 'object' &&
+      'id' in m &&
+      typeof (m as { id: unknown }).id === 'string'
+    ) {
+      ids.push((m as { id: string }).id)
+    }
+  }
+  return ids
+}
+
+function tournamentMatchSetChanged(before: unknown, after: unknown): boolean {
+  const a = [...tournamentMatchIds(before)].sort()
+  const b = [...tournamentMatchIds(after)].sort()
+  if (a.length !== b.length) return true
+  return a.some((id, i) => id !== b[i])
+}
+
 function mapTournamentRow(row: TournamentStateRow) {
   return {
     id: row.id,
@@ -1000,10 +1023,32 @@ app.put('/api/tournaments/:id', requireAdmin, async (req, res) => {
     return
   }
 
+  const { data: existingRow, error: existingErr } =
+    await fetchTournamentRowById(id)
+  if (existingErr) {
+    res.status(500).json({ error: existingErr.message })
+    return
+  }
+  if (!existingRow) {
+    res.status(404).json({ error: 'Tournament not found' })
+    return
+  }
+
+  const incomingMatches = matches ?? []
+  if (
+    tournamentMatchSetChanged(existingRow.matches, incomingMatches) &&
+    req.role !== 'super_admin'
+  ) {
+    res.status(403).json({
+      error: 'Only super admin can add or remove tournament matches',
+    })
+    return
+  }
+
   const patch: Record<string, unknown> = {
     kill_point: Math.trunc(killPoint),
     placement_points: placementPoints,
-    matches: matches ?? [],
+    matches: incomingMatches,
     updated_at: new Date().toISOString(),
   }
   if (typeof name === 'string' && name.trim()) {
@@ -1119,6 +1164,18 @@ app.put('/api/tournament', requireAdmin, async (req, res) => {
   const id = (current as TournamentStateRow | null)?.id ?? 'default'
 
   const cur = current as TournamentStateRow | null
+  const incomingMatches = matches ?? []
+  if (
+    cur &&
+    tournamentMatchSetChanged(cur.matches, incomingMatches) &&
+    req.role !== 'super_admin'
+  ) {
+    res.status(403).json({
+      error: 'Only super admin can add or remove tournament matches',
+    })
+    return
+  }
+
   const row = {
     id,
     name:
@@ -1128,7 +1185,7 @@ app.put('/api/tournament', requireAdmin, async (req, res) => {
     is_current: cur?.is_current ?? true,
     kill_point: Math.trunc(killPoint),
     placement_points: placementPoints,
-    matches: matches ?? [],
+    matches: incomingMatches,
     updated_at: new Date().toISOString(),
   }
 

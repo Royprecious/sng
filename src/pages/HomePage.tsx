@@ -129,7 +129,7 @@ export function HomePage() {
               No soldiers yet. Check back once the roster is filled.
             </p>
           ) : (
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
               {featured.map((s) => (
                 <SngMemberCard key={s.id} soldier={s} compactActions />
               ))}
