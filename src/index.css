@@ -58,20 +58,18 @@
     padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   }
 
-  /** Off-screen PNG export — must not widen the page on phones/tablets */
+  /** Off-screen PNG export — full-size layout, not visible on screen */
   .export-capture-host {
     position: fixed;
     top: 0;
     left: 0;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
+    width: max-content;
+    height: auto;
+    overflow: visible;
     opacity: 0;
     pointer-events: none;
-    z-index: -10;
-    clip: rect(0, 0, 0, 0);
-    clip-path: inset(50%);
-    white-space: nowrap;
+    z-index: -1;
+    transform: translateX(-120vw);
   }
 
   .bg-grid-pattern {
@@ -393,6 +391,58 @@
       rgba(255, 255, 255, 0.015) 2px,
       rgba(255, 255, 255, 0.015) 3px
     );
+  }
+
+  .member-card-watermark {
+    position: absolute;
+    left: 50%;
+    top: 42%;
+    z-index: 0;
+    translate: -50% -50%;
+    font-size: clamp(3.5rem, 18vw, 5.5rem);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: rgba(255, 255, 255, 0.04);
+    pointer-events: none;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .member-card-shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 40%,
+      rgba(255, 255, 255, 0.06) 48%,
+      transparent 56%
+    );
+    background-size: 200% 100%;
+    animation: member-card-shine 7s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes member-card-shine {
+    0%,
+    100% {
+      background-position: 120% 0;
+    }
+    50% {
+      background-position: -20% 0;
+    }
+  }
+
+  .member-card-verified-seal {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    background: rgba(0, 122, 94, 0.12);
+    color: rgb(167, 243, 208);
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
 
   .hierarchy-avatar-ring {

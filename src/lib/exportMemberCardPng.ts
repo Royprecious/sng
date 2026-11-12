@@ -14,10 +14,19 @@ export function safeExportFilename(label: string): string {
 export async function captureElementAsPng(
   node: HTMLElement,
 ): Promise<string> {
+  const width = Math.ceil(node.getBoundingClientRect().width)
+  const height = Math.ceil(node.getBoundingClientRect().height)
+  if (width < 48 || height < 48) {
+    throw new Error(
+      'Card export failed — layout was not rendered at full size. Refresh and try again.',
+    )
+  }
   return toPng(node, {
     pixelRatio: 2,
     cacheBust: true,
     backgroundColor: '#040810',
+    width,
+    height,
   })
 }
 

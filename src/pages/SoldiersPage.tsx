@@ -29,8 +29,8 @@ export function SoldiersPage() {
       <PageHeader eyebrow="Roster" title="Our soldiers">
         Cameroon-born and diaspora operators repping {CLAN_NAME} (
         <span className="font-bold text-blue-300">{CLAN_TAG}</span>
-        ). Each operator gets a shareable member card save or share from your
-        phone.
+        ). Each operator gets an official member card — tier, stats, and roster
+        ID — built to save and share with pride.
       </PageHeader>
 
       {authReady && canManageRoster && (

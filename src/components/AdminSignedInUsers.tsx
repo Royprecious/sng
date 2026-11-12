@@ -39,7 +39,7 @@ export function AdminSignedInUsers() {
             Signed-in accounts
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            Clan Master only — Google emails for everyone who has signed in.{' '}
+            Clan Master only Google emails for everyone who has signed in.{' '}
             <span className="text-emerald-400/90">Green</span> = active in the
             last 5 minutes.
           </p>

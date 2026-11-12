@@ -1,4 +1,4 @@
-import type { ClanRank, Soldier } from '../data/clan'
+import type { ClanRank, Soldier, TierId } from '../data/clan'
 
 export type MemberCardVisual =
   | 'master'
@@ -24,6 +24,32 @@ export function memberCardVisualForRank(rank: ClanRank): MemberCardVisual {
 
 export function memberCardVisualForSoldier(s: Soldier): MemberCardVisual {
   return memberCardVisualForRank(s.clanRank)
+}
+
+/** Short pride line under the clan header — rank-aware. */
+export const memberCardHonorLine: Record<MemberCardVisual, string> = {
+  master: 'Supreme command · Flag bearer',
+  mistress: 'Co-command · Heart of the clan',
+  vice: 'Second-in-command · Operations lead',
+  coordinator: 'Squad anchor · Events & roster',
+  member: 'Certified operator · Pride of Cameroon',
+}
+
+export function memberCardRosterId(soldierId: string): string {
+  const compact = soldierId.replace(/-/g, '').slice(0, 8).toUpperCase()
+  return `SNG-${compact || 'ROSTER'}`
+}
+
+export function memberCardTierFrameClass(tierId: TierId): string {
+  return `tier-board-frame-${tierId}`
+}
+
+export function memberCardTierBodyClass(tierId: TierId): string {
+  return `tier-board-body-${tierId}`
+}
+
+export function memberCardTierHeaderClass(tierId: TierId): string {
+  return `tier-board-header-${tierId}`
 }
 
 export const memberCardBorderClass: Record<MemberCardVisual, string> = {
