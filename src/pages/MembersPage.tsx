@@ -15,7 +15,7 @@ import {
 } from '../data/clan'
 import { useAuth } from '../context/AuthContext'
 import { useClan } from '../context/ClanContext'
-import { downloadCardPng } from '../lib/exportMemberCardPng'
+import { saveExportPng } from '../lib/exportMemberCardPng'
 
 function holderForSlot(
   slot: LeadershipSlotTarget,
@@ -48,9 +48,15 @@ export function MembersPage() {
     setExportHint(null)
     try {
       const stamp = new Date().toISOString().slice(0, 10)
-      await downloadCardPng(node, `members-roster-${stamp}`)
-      setExportHint('Roster PNG downloaded')
+      const title = `${CLAN_NAME} roster · ${sorted.length} members`
+      const result = await saveExportPng(node, `members-roster-${stamp}`, title)
+      setExportHint(
+        result === 'shared'
+          ? 'Tap Save Image to add it to Photos'
+          : 'Roster image saved',
+      )
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       setExportHint(
         err instanceof Error ? err.message : 'Could not export roster',
       )
@@ -116,10 +122,11 @@ export function MembersPage() {
                       onClick={() => void exportRosterPng()}
                       className="touch-manipulation"
                     >
-                      {exportBusy ? 'Exporting…' : 'Download roster PNG'}
+                      {exportBusy ? 'Saving…' : 'Save roster image'}
                     </GamingButton>
                     <p className="max-w-[14rem] text-right text-[10px] text-slate-500">
-                      Full table snapshot for WhatsApp, Discord, or archives
+                      On iPhone, use Save Image on the share sheet to keep it in
+                      Photos
                     </p>
                     {exportHint && (
                       <p className="text-xs font-semibold text-emerald-400">
